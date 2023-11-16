@@ -1,17 +1,107 @@
 import tkinter as tk
-from tkinter import ttk
 from tkinter import messagebox
+from tkinter import filedialog
+from tkcalendar import Calendar
+from PIL import Image, ImageTk
+
 import time
-from MusicPlayer import MusicPlayer
-from DailyQuote import DailyQuote
-from DateSelector import DateSelector
-from SummaryWindow import SummaryWindow
-from TabbedWindow import TabbedWindow
 import datetime
 import pygame
-from PIL import Image, ImageTk
-from tkinter import filedialog
+import random
 
+from MusicPlayer import MusicPlayer
+
+class TabbedWindow(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Tabbed Window")
+        self.geometry("400x400")
+
+        # Create the tab bar (Notebook)
+        self.tab_bar = tk.Notebook(self)
+        self.tab_bar.pack(expand=True, fill=tk.BOTH)
+
+        # Create Help tab
+        self.help_frame = tk.Frame(self.tab_bar)
+        self.tab_bar.add(self.help_frame, text="Help")
+        self.help_label = tk.Label(self.help_frame, text="This is the Help tab.")
+        self.help_label.pack(pady=20)
+
+        # Create Settings tab
+        self.settings_frame = tk.Frame(self.tab_bar)
+        self.tab_bar.add(self.settings_frame, text="Settings")
+        self.settings_label = tk.Label(self.settings_frame, text="This is the Settings tab.")
+        self.settings_label.pack(pady=20)
+
+
+
+class SummaryWindow:
+    def __init__(self, parent):
+        self.parent = parent
+        self.root = tk.Toplevel(self.parent)
+        self.root.title("Work Summary")
+        self.root.geometry("400x300")
+
+        self.label = tk.Label(self.root, text="Enter your work summary:")
+        self.label.pack(pady=10)
+
+        self.text_area = tk.Text(self.root, wrap=tk.WORD)
+        self.text_area.pack(pady=10, padx=10, expand=True, fill=tk.BOTH)
+
+        self.save_button = tk.Button(self.root, text="Save", command=self.save_summary)
+        self.save_button.pack(pady=10, side=tk.LEFT, padx=5)
+
+        self.open_button = tk.Button(self.root, text="Open", command=self.open_summary)
+        self.open_button.pack(pady=10, side=tk.LEFT, padx=5)
+
+    def save_summary(self):
+        summary = self.text_area.get("1.0", tk.END).strip()
+        if summary:
+            file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")], initialfile="work_summary.txt")
+            if not file_path:  # If the user cancels the save dialog
+                return
+            with open(file_path, "w") as file:
+                file.write(summary + "\n\n")
+            messagebox.showinfo("Success", "Summary saved successfully!")
+            self.root.destroy()
+        else:
+            messagebox.showwarning("Warning", "Please enter your summary before saving.")
+
+    def open_summary(self):
+        file_path = filedialog.askopenfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+        if file_path:
+            try:
+                with open(file_path, "r") as file:
+                    content = file.read()
+                    self.text_area.delete("1.0", tk.END)  # Clear the text area
+                    self.text_area.insert(tk.END, content)  # Insert the content of the file
+            except FileExistsError:
+                print("error")
+
+
+class DateSelector(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent,bg='#113946')
+        self.place(x=30, y=70)
+        self.calendar = Calendar(self)
+        self.calendar.pack(pady=20, padx=10, fill=tk.BOTH, expand=True)
+
+
+class DailyQuote:
+    def __init__(self, parent):
+        self.parent = parent
+        self.quotes = [
+            "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt",
+            "The best way to predict the future is to create it. - Abraham Lincoln",
+            "Life is what happens when you’re busy making other plans. - John Lennon",
+            "The way to get started is to quit talking and begin doing. - Walt Disney",
+            "The purpose of our lives is to be happy. - Dalai Lama"
+        ]
+        self.show_quote()
+
+    def show_quote(self):
+        quote = random.choice(self.quotes)
+        messagebox.showinfo("Daily Quote", quote)
     
 
 
@@ -202,7 +292,7 @@ class Calender:
     def clear_date(self):
         self.selected_date_show.config(text="")
 
-class MainMenu(tk.Tk,Timer,Setting_window,Calender):
+class MainMenu(tk.Tk,Timer,Setting_window,Calender,DailyQuote,DateSelector,SummaryWindow,TabbedWindow):
     def __init__(self):
         super().__init__()
         self.title("Project learner")
@@ -371,10 +461,6 @@ class MainMenu(tk.Tk,Timer,Setting_window,Calender):
                 # Display the content. You can decide how you want to display it.
                 # For instance, you can show it in a new window or a messagebox.
                 messagebox.showinfo("Summary", content)
-
-
-
-  
 
 app = MainMenu()
 app.mainloop()
